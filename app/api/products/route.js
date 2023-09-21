@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getProducts } from "@/services/getProducts";
+import { getProducts } from "@/services/getFeedProducts";
+import { config } from "@/config/config";
 
 export async function GET() {
-  await getProducts();
-  return NextResponse.json({ message: "no chyba działa" });
+  const data = await getProducts(config.source, config.type.catalog);
+  return NextResponse.json({ data: "gotowe" });
 }

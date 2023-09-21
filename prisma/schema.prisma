@@ -2,34 +2,33 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-	provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-	provider = "postgresql"
-	url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model Product {
-	id           Int            @id @default(autoincrement())
-	variantId    Int            @unique
-	sku          String
-	ean          String
-	brand        String
-	domain       String
-	ProductTitle ProductTitle[]
-	createdAt    DateTime       @default(now())
-	updatedAt    DateTime       @default(now()) @updatedAt
+    id           Int            @id @default(autoincrement())
+    variantId    Int            @unique
+    sku          String
+    ean          String
+    brand        String
+    ProductTitle ProductTitle[]
+    createdAt    DateTime       @default(now())
+    updatedAt    DateTime       @default(now()) @updatedAt
 }
 
 model ProductTitle {
-	id        Int      @id @default(autoincrement())
-	name      String
-	lang      String
-	newPrice  String
-	oldPrice  String
-	product   Product  @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-	productId Int
-	createdAt DateTime @default(now())
-	updatedAt DateTime @default(now()) @updatedAt
+    id        Int      @id @default(autoincrement())
+    name      String
+    lang      String
+    newPrice  String
+    oldPrice  String
+    product   Product  @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+    productId Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
 }
