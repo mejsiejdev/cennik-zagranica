@@ -15,7 +15,7 @@ model Product {
     variantId    Int            @unique
     sku          String
     ean          String
-    brand        String
+    brand        String         @default("")
     ProductTitle ProductTitle[]
     createdAt    DateTime       @default(now())
     updatedAt    DateTime       @default(now()) @updatedAt
@@ -28,7 +28,7 @@ model ProductTitle {
     newPrice  String
     oldPrice  String
     product   Product  @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-    productId Int
+    productId Int      @unique
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now()) @updatedAt
 }
