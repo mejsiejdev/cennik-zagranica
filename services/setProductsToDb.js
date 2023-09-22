@@ -3,7 +3,7 @@ import { getProducts } from "@/services/getFeedProducts";
 import { config } from "@/config/config";
 
 const setDataToDb = (data) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     for (const product of data) {
       const { lang, variantId, sku, ean, price, name, brand } = product;
       const existing = await prisma.product.findUnique({
@@ -58,7 +58,7 @@ const setDataToDb = (data) => {
         });
       }
     }
-    resolve("gotowe");
+    resolve(`Gotowe`);
   });
 };
 
@@ -67,7 +67,9 @@ export const parseFeedData = async () => {
   return new Promise(async (resolve) => {
     resolve(
       feedData
+        .filter(Boolean)
         .map((data) => {
+          if (!data) return;
           const products = data.result.offers.o.map((product) => {
             return {
               lang: data.lang,
@@ -76,12 +78,12 @@ export const parseFeedData = async () => {
               ean: !product.attrs[0].a[1]._ ? "" : product.attrs[0].a[1]._,
               price: product.$.price,
               name: product.name[0],
-              brand: product.attrs[0].a[0]._,
+              brand: !product.attrs[0].a[0]._ ? "" : product.attrs[0].a[0]._,
             };
           });
           return [...products];
         })
-        .flat(),
+        .flat()
     );
-  }).then((data) => setDataToDb(data));
+  }).then((data) => setDataToDb(data).then((info) => console.log(info)));
 };

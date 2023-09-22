@@ -1,4 +1,3 @@
-import { config } from "@/config/config";
 import axios from "axios";
 import xml2js from "xml2js";
 
@@ -50,7 +49,7 @@ export const getProducts = async (sources, type) => {
   const requests = sources.map((feed) => {
     return fetchProductData(feed.source, feed.lang, feed.url + type)
       .then((res) => parseProductData(res.source, res.lang, res.data))
-      .catch((error) => console.log(error.code));
+      .catch((error) => console.log(feed.source, feed.lang, feed.url + type, error.code));
   });
   return await Promise.all(requests);
 };

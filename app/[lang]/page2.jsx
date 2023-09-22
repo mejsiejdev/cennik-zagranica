@@ -12,7 +12,7 @@ import { main } from "prisma/preinstall";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import Password from "@/components/Password";
-import { DataTable, DataTableDemo } from "@/components/TableTest";
+import { DataTableDemo } from "@/components/TableTest";
 
 const LangPage = async ({ params }) => {
 	const cookieStore = cookies();
@@ -46,21 +46,10 @@ const LangPage = async ({ params }) => {
 	});
 	const preparedProducts = products
 		.filter((product) => product.ProductTitle.length !== 0)
-		.map((prod) => {
-			const { variantId, sku, ean, brand } = prod;
-			return {
-				variantId,
-				sku,
-				ean,
-				brand,
-				name: prod.ProductTitle[0].name,
-				lang: prod.ProductTitle[0].lang,
-				price: {
-					newPrice: prod.ProductTitle[0].newPrice,
-					oldPrice: prod.ProductTitle[0].oldPrice,
-				},
-			};
-		});
+		.map((prod) => ({
+			...prod,
+			ProductTitle: { ...prod.ProductTitle[0] },
+		}));
 
 	const setPrice = (item) => {
 		const { newPrice, oldPrice } = item.ProductTitle;
@@ -84,7 +73,36 @@ const LangPage = async ({ params }) => {
 	return (
 		<main className="p-12">
 			<h1 className="text-3xl uppercase font-bold mb-4">{country(params.lang)}</h1>
-			<DataTable data={preparedProducts} lang={params.lang} />
+			<DataTableDemo />
+			<Table className="border relative text-black">
+				<TableHeader>
+					<TableRow className="sticky top-[-1px]">
+						<TableHead className=" bg-gray-200 text-center">No.</TableHead>
+						<TableHead className=" bg-gray-200 text-center">ID</TableHead>
+						<TableHead className="bg-gray-200">SKU</TableHead>
+						<TableHead className=" bg-gray-200">EAN</TableHead>
+						<TableHead className=" bg-gray-200">BRAND</TableHead>
+						<TableHead className=" bg-gray-200">TITLE</TableHead>
+						<TableHead className="pr-[26px] bg-gray-200 text-right">PRICE</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{preparedProducts.map((product, index) => {
+						const { price, style } = setPrice(product);
+						return (
+							<TableRow className={style} key={product.id}>
+								<TableCell className={`text-center`}>{index + 1}</TableCell>
+								<TableCell className={`text-center`}>{product.variantId}</TableCell>
+								<TableCell>{product.sku.toUpperCase()}</TableCell>
+								<TableCell>{product.ean}</TableCell>
+								<TableCell>{product.brand}</TableCell>
+								<TableCell>{product.ProductTitle.name}</TableCell>
+								<TableCell className={`text-right font-medium`}>{price}</TableCell>
+							</TableRow>
+						);
+					})}
+				</TableBody>
+			</Table>
 		</main>
 	);
 };
