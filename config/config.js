@@ -60,4 +60,8 @@ export const config = {
     { source: "toolight", lang: "at", url: "https://toolight.at/" },
     { source: "toolight", lang: "si", url: "https://toolight.si/" },
   ],
+  mailing: {
+    subject: "Price Change Podlasiak",
+    clients: ["drteski@gmail.com", "teski666@gmail.com"],
+  },
 };

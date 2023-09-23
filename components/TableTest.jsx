@@ -44,6 +44,7 @@ export function DataTable({ data, lang }) {
 				return (
 					<Button
 						variant="ghost"
+						className="hover:bg-transparent p-0"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
 						ID
@@ -59,6 +60,7 @@ export function DataTable({ data, lang }) {
 				return (
 					<Button
 						variant="ghost"
+						className="hover:bg-transparent p-0"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
 						SKU
@@ -74,6 +76,7 @@ export function DataTable({ data, lang }) {
 				return (
 					<Button
 						variant="ghost"
+						className="hover:bg-transparent p-0"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
 						EAN
@@ -89,6 +92,7 @@ export function DataTable({ data, lang }) {
 				return (
 					<Button
 						variant="ghost"
+						className="hover:bg-transparent p-0"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
 						BRAND
@@ -104,6 +108,7 @@ export function DataTable({ data, lang }) {
 				return (
 					<Button
 						variant="ghost"
+						className="hover:bg-transparent p-0"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
 						TITLE
@@ -165,6 +170,11 @@ export function DataTable({ data, lang }) {
 			columnVisibility,
 			rowSelection,
 		},
+		initialState: {
+			pagination: {
+				pageSize: 20,
+			},
+		},
 	});
 
 	return (
@@ -176,21 +186,21 @@ export function DataTable({ data, lang }) {
 					onChange={(event) =>
 						table.getColumn("variantId")?.setFilterValue(event.target.value)
 					}
-					className="max-w-sm"
+					className="max-w-sm mr-4"
 				/>
 
 				<Input
 					placeholder="Filter SKU..."
 					value={table.getColumn("sku")?.getFilterValue() ?? ""}
 					onChange={(event) => table.getColumn("sku")?.setFilterValue(event.target.value)}
-					className="max-w-sm"
+					className="max-w-sm mr-4"
 				/>
 
 				<Input
 					placeholder="Filter EAN..."
 					value={table.getColumn("ean")?.getFilterValue() ?? ""}
 					onChange={(event) => table.getColumn("ean")?.setFilterValue(event.target.value)}
-					className="max-w-sm"
+					className="max-w-sm mr-4"
 				/>
 				<Input
 					placeholder="Filter Brand..."
@@ -198,7 +208,7 @@ export function DataTable({ data, lang }) {
 					onChange={(event) =>
 						table.getColumn("brand")?.setFilterValue(event.target.value)
 					}
-					className="max-w-sm"
+					className="max-w-sm mr-4"
 				/>
 				<Input
 					placeholder="Filter Title..."
@@ -206,8 +216,9 @@ export function DataTable({ data, lang }) {
 					onChange={(event) =>
 						table.getColumn("name")?.setFilterValue(event.target.value)
 					}
-					className="max-w-sm"
+					className="max-w-sm mr-4"
 				/>
+
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="outline" className="ml-auto">
@@ -239,7 +250,7 @@ export function DataTable({ data, lang }) {
 				<Table>
 					<TableHeader>
 						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow key={headerGroup.id}>
+							<TableRow className="hover:bg-white" key={headerGroup.id}>
 								{headerGroup.headers.map((header) => {
 									return (
 										<TableHead key={header.id}>
@@ -247,7 +258,7 @@ export function DataTable({ data, lang }) {
 												? null
 												: flexRender(
 														header.column.columnDef.header,
-														header.getContext()
+														header.getContext(),
 												  )}
 										</TableHead>
 									);
@@ -266,7 +277,7 @@ export function DataTable({ data, lang }) {
 										<TableCell key={cell.id}>
 											{flexRender(
 												cell.column.columnDef.cell,
-												cell.getContext()
+												cell.getContext(),
 											)}
 										</TableCell>
 									))}

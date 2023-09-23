@@ -1,18 +1,10 @@
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
 import prisma from "@/db";
-import { country, currencyMapping, matchPath } from "@/lib/utils";
+import { country, matchPath } from "@/lib/utils";
 import { main } from "prisma/preinstall";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import Password from "@/components/Password";
-import { DataTable, DataTableDemo } from "@/components/TableTest";
+import { DataTable } from "@/components/TableTest";
 
 const LangPage = async ({ params }) => {
 	const cookieStore = cookies();
@@ -60,30 +52,18 @@ const LangPage = async ({ params }) => {
 					oldPrice: prod.ProductTitle[0].oldPrice,
 				},
 			};
+		})
+		.sort((a, b) => {
+			const aPriceDiff = parseFloat(a.price.newPrice) - parseFloat(a.price.oldPrice);
+			const bPriceDiff = parseFloat(b.price.newPrice) - parseFloat(b.price.oldPrice);
+			if (aPriceDiff !== 0 || bPriceDiff !== 0) return 1;
+			return 0;
 		});
+	// console.log(preparedProducts);
 
-	const setPrice = (item) => {
-		const { newPrice, oldPrice } = item.ProductTitle;
-		const price = new Intl.NumberFormat(currencyMapping(params.lang).locale, {
-			style: "currency",
-			currency: currencyMapping(params.lang).currency,
-		}).format(newPrice);
-
-		if (newPrice > oldPrice)
-			return {
-				price: price + " ▲",
-				style: "text-black bg-green-300 hover:bg-green-400",
-			};
-		if (newPrice < oldPrice)
-			return {
-				price: price + " ▼",
-				style: "text-black bg-red-300 hover:bg-red-400",
-			};
-		return { price: price, style: "text-black bg-white pr-[26px]" };
-	};
 	return (
 		<main className="p-12">
-			<h1 className="text-3xl uppercase font-bold mb-4">{country(params.lang)}</h1>
+			<h1 className="text-3xl uppercase font-bold">{country(params.lang)}</h1>
 			<DataTable data={preparedProducts} lang={params.lang} />
 		</main>
 	);
