@@ -1,33 +1,41 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email";
 import { render } from "@react-email/render";
-import template from "@/email/template";
+import template from "@/email/EmailTemplate";
+import prisma from "@/db";
+import { config } from "@/config/config";
+import { country } from "@/lib/utils";
 
-export async function GET(request) {
-  const lang = request.nextUrl.searchParams.get("lang");
-  const products = await prisma.product.findMany({
-    include: {
-      ProductTitle: {
-        where: {
-          lang,
+export async function GET() {
+  const listOfSentMessages = [];
+  for (const mail of config.mailing.clients) {
+    const products = await prisma.product.findMany({
+      include: {
+        ProductTitle: {
+          where: {
+            lang: mail.lang,
+          },
         },
       },
-    },
-  });
-  const filtered = products
-    .map((product) => {
-      const { sku, ean, variantId } = product;
-      return { sku, ean, variantId, ...product.ProductTitle[0] };
-    })
-    .filter((diff) => {
-      const { newPrice, oldPrice } = diff;
-      const difference = parseFloat(newPrice) - parseFloat(oldPrice);
-      if (difference !== 0) return diff;
     });
-  await sendEmail({
-    to: "drteski@gmail.com",
-    subject: "Welcome to NextAPI",
-    html: render(template(filtered, lang)),
-  });
-  return NextResponse.json("sent");
+    const filtered = products
+      .map((product) => {
+        if (product.ProductTitle.length === 0) return;
+        if (product.ProductTitle[0].priceDifference === 0) return;
+        const { sku, ean, variantId } = product;
+        return { sku, ean, variantId, newPrice: product.ProductTitle[0].newPrice };
+      })
+      .filter(Boolean);
+
+    if (filtered.length !== 0) {
+      const message = await sendEmail({
+        to: mail.email,
+        subject: `${config.mailing.subject} ${country(mail.lang)}`,
+        html: render(template(filtered, mail.lang)),
+      });
+      listOfSentMessages.push(message);
+    }
+  }
+  return NextResponse.json({ messageSentTo: listOfSentMessages });
 }

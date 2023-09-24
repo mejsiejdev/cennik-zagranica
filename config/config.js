@@ -62,6 +62,9 @@ export const config = {
   ],
   mailing: {
     subject: "Price Change Podlasiak",
-    clients: ["drteski@gmail.com", "teski666@gmail.com"],
+    clients: [
+      { email: "drteski@gmail.com", lang: "pl" },
+      { email: "teski666@gmail.com", lang: "fr" },
+    ],
   },
 };

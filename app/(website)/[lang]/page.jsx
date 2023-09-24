@@ -4,9 +4,11 @@ import { main } from "prisma/preinstall";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import Password from "@/components/Password";
-import { DataTable } from "@/components/TableTest";
+import { DataTable } from "@/components/DataTable";
 
 const LangPage = async ({ params }) => {
+	if (!matchPath(params.lang)) return notFound();
+
 	const cookieStore = cookies();
 	const cookieLang = cookieStore.get("lang")?.value || "";
 	const cookieAuth = cookieStore.get("authorized")?.value
@@ -25,7 +27,6 @@ const LangPage = async ({ params }) => {
 				<Password lang={params.lang} />
 			</main>
 		);
-	if (!matchPath(params.lang)) return notFound();
 
 	let products = await prisma.product.findMany({
 		include: {
@@ -50,21 +51,26 @@ const LangPage = async ({ params }) => {
 				price: {
 					newPrice: prod.ProductTitle[0].newPrice,
 					oldPrice: prod.ProductTitle[0].oldPrice,
+					priceDifference: prod.ProductTitle[0].priceDifference,
 				},
 			};
-		})
-		.sort((a, b) => {
-			const aPriceDiff = parseFloat(a.price.newPrice) - parseFloat(a.price.oldPrice);
-			const bPriceDiff = parseFloat(b.price.newPrice) - parseFloat(b.price.oldPrice);
-			if (aPriceDiff !== 0 || bPriceDiff !== 0) return 1;
-			return 0;
 		});
-	// console.log(preparedProducts);
+
+	const productWithPriceDifference = preparedProducts.filter(
+		(product) =>
+			product.price.priceDifference > 0 || (product.price.priceDifference < 0 && true),
+	);
+	const productWithoutPriceDifference = preparedProducts.filter(
+		(product) => product.price.priceDifference === 0 && true,
+	);
 
 	return (
 		<main className="p-12">
 			<h1 className="text-3xl uppercase font-bold">{country(params.lang)}</h1>
-			<DataTable data={preparedProducts} lang={params.lang} />
+			<DataTable
+				data={[...productWithPriceDifference, ...productWithoutPriceDifference]}
+				lang={params.lang}
+			/>
 		</main>
 	);
 };

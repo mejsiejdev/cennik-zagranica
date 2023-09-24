@@ -22,13 +22,15 @@ model Product {
 }
 
 model ProductTitle {
-    id        Int      @id @default(autoincrement())
-    name      String
-    lang      String
-    newPrice  String
-    oldPrice  String
-    product   Product  @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-    productId Int
-    createdAt DateTime @default(now())
-    updatedAt DateTime @default(now()) @updatedAt
+    id              Int       @id @default(autoincrement())
+    name            String
+    lang            String
+    newPrice        Float
+    oldPrice        Float
+    priceDifference Float
+    differenceAt    DateTime?
+    product         Product   @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+    productId       Int
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @default(now())
 }

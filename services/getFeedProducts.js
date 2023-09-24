@@ -1,7 +1,13 @@
 import axios from "axios";
 import xml2js from "xml2js";
+import Bottleneck from "bottleneck";
 
 const parserXML = new xml2js.Parser();
+
+const limiter = new Bottleneck({
+  minTime: 250,
+  maxConcurrent: 10,
+});
 
 axios.interceptors.response.use(undefined, (err) => {
   const { config, message } = err;
@@ -24,12 +30,14 @@ axios.interceptors.response.use(undefined, (err) => {
 const fetchProductData = (source, lang, url) => {
   return new Promise(async (resolve, reject) => {
     try {
-      await axios
-        .get(url, {
-          retry: 4,
-          retryDelay: 3000,
-        })
-        .then((res) => resolve({ source, lang, data: res.data }));
+      await limiter.schedule(() => {
+        return axios
+          .get(url, {
+            retry: 4,
+            retryDelay: 3000,
+          })
+          .then((res) => resolve({ source, lang, data: res.data }));
+      });
     } catch (error) {
       reject(error);
     }

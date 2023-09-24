@@ -23,6 +23,7 @@ const setDataToDb = (data) => {
               lang,
               newPrice: price,
               oldPrice: price,
+              priceDifference: 0,
               product: {
                 connect: { id: existing.id },
               },
@@ -36,6 +37,8 @@ const setDataToDb = (data) => {
             data: {
               newPrice: price,
               oldPrice: existingPrice[0].newPrice,
+              priceDifference: existingPrice[0].newPrice - price,
+              differenceAt: new Date(),
             },
           });
         }
@@ -52,6 +55,7 @@ const setDataToDb = (data) => {
                 lang,
                 newPrice: price,
                 oldPrice: price,
+                priceDifference: 0,
               },
             },
           },
@@ -59,6 +63,34 @@ const setDataToDb = (data) => {
       }
     }
     resolve(`Gotowe`);
+  });
+};
+
+const uncheckOldPriceDifferences = () => {
+  return new Promise(async (resolve) => {
+    const today = new Date();
+    const products = await prisma.productTitle.findMany({
+      where: {
+        NOT: [{ priceDifference: 0 }],
+      },
+    });
+    for (const product of products) {
+      const date2 = new Date(product.differenceAt);
+      const diffDays = parseInt((today - date2) / (1000 * 60 * 60 * 24), 10);
+      if (diffDays > 30) {
+        await prisma.productTitle.update({
+          where: {
+            id: product.id,
+          },
+          data: {
+            oldPrice: product.newPrice,
+            priceDifference: 0,
+            differenceAt: new Date(),
+          },
+        });
+      }
+    }
+    resolve("odznaczone");
   });
 };
 
@@ -76,14 +108,19 @@ export const parseFeedData = async () => {
               variantId: parseInt(product.$.variantId),
               sku: product.attrs[0].a[2]._,
               ean: !product.attrs[0].a[1]._ ? "" : product.attrs[0].a[1]._,
-              price: product.$.price,
+              price: parseFloat(product.$.price),
               name: product.name[0],
               brand: !product.attrs[0].a[0]._ ? "" : product.attrs[0].a[0]._,
             };
           });
           return [...products];
         })
-        .flat()
+        .flat(),
     );
-  }).then((data) => setDataToDb(data).then((info) => console.log(info)));
+  }).then((data) =>
+    setDataToDb(data).then((info) => {
+      uncheckOldPriceDifferences();
+      console.log(info);
+    }),
+  );
 };

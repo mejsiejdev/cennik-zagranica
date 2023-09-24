@@ -9,4 +9,3 @@ const LoadingState = () => {
 };
 
 export default LoadingState;
-LoadingState;
