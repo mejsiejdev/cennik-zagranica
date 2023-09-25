@@ -58,14 +58,14 @@ const LangPage = async ({ params }) => {
 
 	const productWithPriceDifference = preparedProducts.filter(
 		(product) =>
-			product.price.priceDifference > 0 || (product.price.priceDifference < 0 && true),
+			product.price.priceDifference > 0 || (product.price.priceDifference < 0 && true)
 	);
 	const productWithoutPriceDifference = preparedProducts.filter(
-		(product) => product.price.priceDifference === 0 && true,
+		(product) => product.price.priceDifference === 0 && true
 	);
 
 	return (
-		<main className="p-12">
+		<main className="p-10">
 			<h1 className="text-3xl uppercase font-bold">{country(params.lang)}</h1>
 			<DataTable
 				data={[...productWithPriceDifference, ...productWithoutPriceDifference]}

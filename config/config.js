@@ -1,6 +1,6 @@
 export const config = {
   type: {
-    catalog: "feed/generate/catalog",
+    catalog: "test.xml",
     ceneo: "feed/generate/ceneo",
     merchant: "feed/generate/merchant",
   },
@@ -41,9 +41,9 @@ export const config = {
     // { source: "tutumi", lang: "bg", url: "https://bg.tutumi.pl/" },
     // { source: "tutumi", lang: "ua", url: "https://ua.tutumi.pl/" },
     // { source: "tutumi", lang: "es", url: "https://es.tutumi.pl/" },
-    { source: "toolight", lang: "pl", url: "https://toolight.pl/" },
+    // { source: "toolight", lang: "pl", url: "https://toolight.pl/" },
     // { source: "toolight", lang: "uk", url: "https://toolight.co.uk/" },
-    { source: "toolight", lang: "de", url: "https://toolight.de/" },
+    // { source: "toolight", lang: "de", url: "https://toolight.de/" },
     // { source: "toolight", lang: "fr", url: "https://toolight.fr/" },
     // { source: "toolight", lang: "lt", url: "https://toolight.lt/" },
     // { source: "toolight", lang: "ro", url: "https://toolight.ro/" },
@@ -59,6 +59,7 @@ export const config = {
     // { source: "toolight", lang: "rs", url: "https://toolight.rs/" },
     // { source: "toolight", lang: "at", url: "https://toolight.at/" },
     // { source: "toolight", lang: "si", url: "https://toolight.si/" },
+    { source: "test", lang: "pl", url: "https://files.lazienka-rea.com.pl/" },
   ],
   mailing: {
     subject: "Price Change Podlasiak",
