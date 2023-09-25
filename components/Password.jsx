@@ -13,7 +13,7 @@ const Password = ({ lang }) => {
 	const router = useRouter();
 	const authorize = async (e) => {
 		e.preventDefault();
-		await axios.post("http://localhost:3000/api/auth", { pass, lang }).then((data) => {
+		await axios.post("/api/auth", { pass, lang }).then((data) => {
 			setError(!data.data.authorized);
 			cookieCutter.set("authorized", `${data.data.authorized}`);
 			cookieCutter.set("lang", lang);

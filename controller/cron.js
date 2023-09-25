@@ -5,15 +5,15 @@ new CronJob(
   "*/60 * * * * *",
   async function () {
     await axios
-      .get("http://localhost:3000/api/products")
+      .get("/api/products")
       .then((res) => console.log(res))
       .catch((e) => console.log(e));
     await axios
-      .get("http://localhost:3000/api/mailing")
+      .get("/api/mailing")
       .then((res) => console.log(res))
       .catch((e) => console.log(e));
   },
   null,
   true,
-  "Europe/Warsaw",
+  "Europe/Warsaw"
 );
