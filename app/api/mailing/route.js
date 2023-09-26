@@ -12,7 +12,7 @@ export async function GET() {
   for (const mail of config.mailing.clients) {
     const products = await prisma.product.findMany({
       include: {
-        ProductTitle: {
+        productTitle: {
           where: {
             lang: mail.lang,
           },
@@ -21,10 +21,10 @@ export async function GET() {
     });
     const filtered = products
       .map((product) => {
-        if (product.ProductTitle.length === 0) return;
-        if (product.ProductTitle[0].priceDifference === 0) return;
+        if (product.productTitle.length === 0) return;
+        if (product.productTitle[0].priceDifference === 0) return;
         const { sku, ean, variantId } = product;
-        return { sku, ean, variantId, newPrice: product.ProductTitle[0].newPrice };
+        return { sku, ean, variantId, newPrice: product.productTitle[0].newPrice };
       })
       .filter(Boolean);
 

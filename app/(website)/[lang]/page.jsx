@@ -30,7 +30,7 @@ const LangPage = async ({ params }) => {
 
 	let products = await prisma.product.findMany({
 		include: {
-			ProductTitle: {
+			productTitle: {
 				where: {
 					lang: params.lang,
 				},
@@ -38,7 +38,7 @@ const LangPage = async ({ params }) => {
 		},
 	});
 	const preparedProducts = products
-		.filter((product) => product.ProductTitle.length !== 0)
+		.filter((product) => product.productTitle.length !== 0)
 		.map((prod) => {
 			const { variantId, sku, ean, brand } = prod;
 			return {
@@ -46,12 +46,12 @@ const LangPage = async ({ params }) => {
 				sku,
 				ean,
 				brand,
-				name: prod.ProductTitle[0].name,
-				lang: prod.ProductTitle[0].lang,
+				name: prod.productTitle[0].name,
+				lang: prod.productTitle[0].lang,
 				price: {
-					newPrice: prod.ProductTitle[0].newPrice,
-					oldPrice: prod.ProductTitle[0].oldPrice,
-					priceDifference: prod.ProductTitle[0].priceDifference,
+					newPrice: prod.productTitle[0].newPrice,
+					oldPrice: prod.productTitle[0].oldPrice,
+					priceDifference: prod.productTitle[0].priceDifference,
 				},
 			};
 		});

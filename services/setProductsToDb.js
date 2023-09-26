@@ -11,7 +11,7 @@ const setDataToDb = (data) => {
           variantId,
         },
         include: {
-          ProductTitle: true,
+          productTitle: true,
         },
       });
       if (existing) {
@@ -30,17 +30,29 @@ const setDataToDb = (data) => {
             },
           });
         } else {
-          await prisma.productTitle.update({
-            where: {
-              id: existingPrice[0].id,
-            },
-            data: {
-              newPrice: price,
-              oldPrice: existingPrice[0].newPrice,
-              priceDifference: existingPrice[0].newPrice - price,
-              differenceAt: new Date(),
-            },
-          });
+          if (existingPrice[0].newPrice === price) {
+            await prisma.productTitle.update({
+              where: {
+                id: existingPrice[0].id,
+              },
+              data: {
+                newPrice: existingPrice[0].newPrice,
+                oldPrice: existingPrice[0].oldPrice,
+              },
+            });
+          } else {
+            await prisma.productTitle.update({
+              where: {
+                id: existingPrice[0].id,
+              },
+              data: {
+                newPrice: price,
+                oldPrice: existingPrice[0].newPrice,
+                priceDifference: existingPrice[0].newPrice - price,
+                differenceAt: new Date(),
+              },
+            });
+          }
         }
       } else {
         await prisma.product.create({
@@ -49,7 +61,7 @@ const setDataToDb = (data) => {
             sku,
             ean,
             brand,
-            ProductTitle: {
+            productTitle: {
               create: {
                 name,
                 lang,
@@ -115,12 +127,12 @@ export const parseFeedData = async () => {
           });
           return [...products];
         })
-        .flat(),
+        .flat()
     );
   }).then((data) =>
     setDataToDb(data).then((info) => {
       uncheckOldPriceDifferences();
       console.log(info);
-    }),
+    })
   );
 };

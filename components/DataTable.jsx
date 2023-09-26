@@ -258,7 +258,7 @@ export function DataTable({ data, lang }) {
 												? null
 												: flexRender(
 														header.column.columnDef.header,
-														header.getContext(),
+														header.getContext()
 												  )}
 										</TableHead>
 									);
@@ -277,7 +277,7 @@ export function DataTable({ data, lang }) {
 										<TableCell key={cell.id}>
 											{flexRender(
 												cell.column.columnDef.cell,
-												cell.getContext(),
+												cell.getContext()
 											)}
 										</TableCell>
 									))}
