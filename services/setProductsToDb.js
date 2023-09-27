@@ -68,7 +68,7 @@ const setDataToDb = (data) => {
         });
       }
     }
-    resolve(`Zaktualizowano produkty`);
+    resolve(`Zaktualizowano produkty - ${data[0].lang}`);
   });
 };
 
@@ -83,7 +83,7 @@ const uncheckOldPriceDifferences = () => {
     if (products.length === 0) return resolve("Brak produktów do odznaczenia");
     for (const product of products) {
       const dayOfDifference = new Date(product.differenceAt);
-      const differenceInDays = parseInt((today - dayOfDifference) / (1000 * 60 * 60 * 24), 10);
+      const differenceInDays = (today - dayOfDifference) / (1000 * 60 * 60 * 24);
       if (differenceInDays > 30) {
         await prisma.productTitle.update({
           where: {
@@ -102,28 +102,22 @@ const uncheckOldPriceDifferences = () => {
   });
 };
 
-export const parseFeedData = async () => {
-  const feedData = await getProducts(config.source, config.type.catalog);
-  return new Promise(async (resolve) => {
+export const parseFeedData = async (url, type) => {
+  const feedData = await getProducts(url, type);
+  return new Promise(async (resolve, reject) => {
+    if (!feedData) reject("no data");
     resolve(
-      feedData
-        .filter(Boolean)
-        .map((data) => {
-          if (!data) return;
-          const products = data.result.offers.o.map((product) => {
-            return {
-              lang: data.lang,
-              variantId: parseInt(product.$.variantId),
-              sku: product.attrs[0].a[2]._,
-              ean: !product.attrs[0].a[1]._ ? "" : product.attrs[0].a[1]._,
-              price: parseFloat(product.$.price),
-              name: product.name[0],
-              brand: !product.attrs[0].a[0]._ ? "" : product.attrs[0].a[0]._,
-            };
-          });
-          return [...products];
-        })
-        .flat()
+      feedData.result.offers.o.map((product) => {
+        return {
+          lang: feedData.lang,
+          variantId: parseInt(product.$.variantId),
+          sku: product.attrs[0].a[2]._,
+          ean: !product.attrs[0].a[1]._ ? "" : product.attrs[0].a[1]._,
+          price: parseFloat(product.$.price),
+          name: product.name[0],
+          brand: !product.attrs[0].a[0]._ ? "" : product.attrs[0].a[0]._,
+        };
+      })
     );
   }).then((data) =>
     setDataToDb(data).then((info) => {
@@ -131,4 +125,10 @@ export const parseFeedData = async () => {
       uncheckOldPriceDifferences((info2) => console.log(info2));
     })
   );
+};
+
+export const test = async () => {
+  for (const url of config.source) {
+    await parseFeedData(url, config.type.catalog);
+  }
 };

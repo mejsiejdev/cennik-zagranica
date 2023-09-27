@@ -5,7 +5,7 @@ export const config = {
     merchant: "feed/generate/merchant",
   },
   source: [
-    // { source: "rea", lang: "pl", url: "https://lazienka-rea.com.pl/" },
+    { source: "rea", lang: "pl", url: "https://lazienka-rea.com.pl/" },
     // { source: "rea", lang: "uk", url: "https://bathroom-rea.co.uk/" },
     // { source: "rea", lang: "de", url: "https://badezimmer-rea.de/" },
     // { source: "rea", lang: "cz", url: "https://koupelna-rea.cz/" },
