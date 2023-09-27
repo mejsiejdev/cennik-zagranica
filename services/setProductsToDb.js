@@ -24,23 +24,14 @@ const setDataToDb = (data) => {
               newPrice: price,
               oldPrice: price,
               priceDifference: 0,
+              sent: false,
               product: {
                 connect: { id: existing.id },
               },
             },
           });
         } else {
-          if (existingPrice[0].newPrice === price) {
-            await prisma.productTitle.update({
-              where: {
-                id: existingPrice[0].id,
-              },
-              data: {
-                newPrice: existingPrice[0].newPrice,
-                oldPrice: existingPrice[0].oldPrice,
-              },
-            });
-          } else {
+          if (existingPrice[0].newPrice !== price) {
             await prisma.productTitle.update({
               where: {
                 id: existingPrice[0].id,
@@ -50,8 +41,10 @@ const setDataToDb = (data) => {
                 oldPrice: existingPrice[0].newPrice,
                 priceDifference: existingPrice[0].newPrice - price,
                 differenceAt: new Date(),
+                sent: false,
               },
             });
+          } else {
           }
         }
       } else {
@@ -68,13 +61,14 @@ const setDataToDb = (data) => {
                 newPrice: price,
                 oldPrice: price,
                 priceDifference: 0,
+                sent: false,
               },
             },
           },
         });
       }
     }
-    resolve(`Gotowe`);
+    resolve(`Zaktualizowano produkty`);
   });
 };
 
@@ -86,10 +80,11 @@ const uncheckOldPriceDifferences = () => {
         NOT: [{ priceDifference: 0 }],
       },
     });
+    if (products.length === 0) return resolve("Brak produktów do odznaczenia");
     for (const product of products) {
-      const date2 = new Date(product.differenceAt);
-      const diffDays = parseInt((today - date2) / (1000 * 60 * 60 * 24), 10);
-      if (diffDays > 30) {
+      const dayOfDifference = new Date(product.differenceAt);
+      const differenceInDays = parseInt((today - dayOfDifference) / (1000 * 60 * 60 * 24), 10);
+      if (differenceInDays > 30) {
         await prisma.productTitle.update({
           where: {
             id: product.id,
@@ -98,11 +93,12 @@ const uncheckOldPriceDifferences = () => {
             oldPrice: product.newPrice,
             priceDifference: 0,
             differenceAt: new Date(),
+            sent: false,
           },
         });
       }
     }
-    resolve("odznaczone");
+    resolve("Odznaczono");
   });
 };
 
@@ -131,8 +127,8 @@ export const parseFeedData = async () => {
     );
   }).then((data) =>
     setDataToDb(data).then((info) => {
-      uncheckOldPriceDifferences();
       console.log(info);
+      uncheckOldPriceDifferences((info2) => console.log(info2));
     })
   );
 };

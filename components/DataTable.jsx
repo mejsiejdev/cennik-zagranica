@@ -120,7 +120,7 @@ export function DataTable({ data, lang }) {
 		},
 		{
 			accessorKey: "price",
-			header: () => <div className="text-right">PRICE</div>,
+			header: () => <div className="text-right pr-[16px]">PRICE</div>,
 			cell: ({ row }) => {
 				const amount = row.getValue("price");
 
