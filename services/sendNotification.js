@@ -13,6 +13,9 @@ const getChangedPrices = (client) => {
           where: {
             lang: client.lang,
           },
+          include: {
+            priceNotifications: true,
+          },
         },
       },
     });
@@ -20,7 +23,7 @@ const getChangedPrices = (client) => {
       .map((product) => {
         if (product.productTitle.length === 0) return;
         if (product.productTitle[0].priceDifference === 0) return;
-        if (product.productTitle[0].sent) return;
+        if (product.productTitle[0].priceNotifications[0].isSent) return;
         const { sku, ean, variantId } = product;
         return { sku, ean, variantId, priceId: product.productTitle[0].id, newPrice: product.productTitle[0].newPrice };
       })
@@ -46,32 +49,43 @@ const sendNotification = ({ productsToSend, client }) => {
 
 const setIsSent = (client, products) => {
   return new Promise(async (resolve, reject) => {
+    if (!products) reject("Brak produktów do ustawienia");
     for (const product of products) {
-      const productPrice = await prisma.productTitle.findUnique({
+      const productTitle = await prisma.productTitle.findUnique({
         where: {
           id: product.priceId,
         },
+        include: {
+          priceNotifications: true,
+        },
       });
-      if (productPrice.sent) {
-        reject("notification already set");
+      if (productTitle.priceNotifications[0].isSent) {
+        reject("Powiadomienie już ustawione jako wysłane");
       } else {
         await prisma.productTitle.update({
           where: { id: product.priceId },
           data: {
-            sent: true,
+            priceNotifications: {
+              update: {
+                where: {
+                  id: productTitle.priceNotifications[0].id,
+                },
+                data: {
+                  isSent: true,
+                },
+              },
+            },
           },
         });
       }
-      resolve("notification created");
+      resolve("Powiadomienie ustawione jako wysłane");
     }
   });
 };
 
 export const notifyClient = async () => {
   for (const mail of config.mailing.clients) {
-    const sentProducts = await getChangedPrices(mail)
-      .then((data) => sendNotification(data))
-      .catch((e) => console.log(e));
+    const sentProducts = await getChangedPrices(mail).then((data) => sendNotification(data));
     await setIsSent(sentProducts.client, sentProducts.products);
   }
 };
