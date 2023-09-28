@@ -8,10 +8,7 @@ import { parseFeedData } from "@/services/parseFeedData";
 import { getProducts } from "@/services/getFeedProducts";
 
 export async function GET() {
-  const data = [];
-  for (const url of config.source) {
-    data.push(await getProducts(url, config.type.catalog));
-  }
+  const data = await getProducts(config.source, config.type.catalog);
   await parseFeedData(data)
     .then((data) => setDataToDb(data))
     .catch((e) => console.log(e));

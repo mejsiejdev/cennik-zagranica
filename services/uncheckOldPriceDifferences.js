@@ -9,13 +9,10 @@ export const uncheckOldPriceDifferences = (lang) => {
         lang,
       },
       include: {
-        priceNotifications: {
-          where: {
-            NOT: [{ isSent: false }],
-          },
-        },
+        priceNotifications: true,
       },
     });
+    console.log(products);
     if (products.length === 0) {
       console.log("Brak produktów do odznaczenia");
       return resolve("Brak produktów do odznaczenia");
@@ -23,6 +20,7 @@ export const uncheckOldPriceDifferences = (lang) => {
     for (const product of products) {
       const dayOfDifference = new Date(product.priceDifferenceAt);
       const differenceInDays = (today - dayOfDifference) / (1000 * 60 * 60 * 24);
+      console.log(product);
       if (differenceInDays > 30) {
         await prisma.productTitle.update({
           where: {

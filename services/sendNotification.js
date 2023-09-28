@@ -5,13 +5,13 @@ import { country } from "@/lib/utils";
 import { render } from "@react-email/render";
 import template from "@/email/EmailTemplate";
 
-const getChangedPrices = (client) => {
+const getChangedPrices = (clients) => {
   return new Promise(async (resolve, reject) => {
     const products = await prisma.product.findMany({
       include: {
         productTitle: {
           where: {
-            lang: client.lang,
+            lang: clients.lang,
           },
           include: {
             priceNotifications: true,
@@ -31,23 +31,26 @@ const getChangedPrices = (client) => {
     if (productsToSend.length === 0) {
       reject("No products to send");
     } else {
-      resolve({ productsToSend, client });
+      resolve({ productsToSend, clients });
     }
   });
 };
 
-const sendNotification = ({ productsToSend, client }) => {
+const sendNotification = ({ productsToSend, clients }) => {
   return new Promise(async (resolve) => {
-    const message = await sendEmail({
-      to: client.email,
-      subject: `${config.mailing.subject} ${country(client.lang)}`,
-      html: render(template(productsToSend, client.lang)),
-    });
-    resolve({ messageTo: message, client, products: productsToSend });
+    for (const client of clients.emails) {
+      await sendEmail({
+        to: client,
+        subject: `${config.mailing.subject} ${country(clients.lang)}`,
+        html: render(template(productsToSend, clients.lang)),
+      });
+      console.log(`Wysłano powiadomienie do - ${clients.lang} - ${client}`);
+    }
+    resolve(productsToSend);
   });
 };
 
-const setIsSent = (client, products) => {
+const setIsSent = (products) => {
   return new Promise(async (resolve, reject) => {
     if (!products) reject("Brak produktów do ustawienia");
     for (const product of products) {
@@ -84,8 +87,11 @@ const setIsSent = (client, products) => {
 };
 
 export const notifyClient = async () => {
-  for (const mail of config.mailing.clients) {
-    const sentProducts = await getChangedPrices(mail).then((data) => sendNotification(data));
-    await setIsSent(sentProducts.client, sentProducts.products);
+  for (const client of config.mailing.clients) {
+    if (client.emails.length !== 0) {
+      await getChangedPrices(client)
+        .then((data) => sendNotification(data))
+        .then((products) => setIsSent(products));
+    }
   }
 };
