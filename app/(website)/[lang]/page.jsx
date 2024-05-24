@@ -5,6 +5,9 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import Password from "@/components/Password";
 import { DataTable } from "@/components/DataTable";
+import convert from "xml-js";
+import { createReadStream } from "fs";
+import { Buffer } from "buffer";
 
 const LangPage = async ({ params }) => {
 	if (!matchPath(params.lang)) return notFound();
@@ -28,6 +31,7 @@ const LangPage = async ({ params }) => {
 			</main>
 		);
 
+	/*
 	let products = await prisma.product.findMany({
 		include: {
 			productTitle: {
@@ -63,14 +67,65 @@ const LangPage = async ({ params }) => {
 	const productWithoutPriceDifference = preparedProducts.filter(
 		(product) => product.price.priceDifference === 0 && true
 	);
+	*/
+
+	console.log(`${process.cwd().replace(/\\/g, "/")}/public/test.xml`);
+
+	/*
+	const data = convert.xml2js(xmlData, {
+		compact: true,
+		spaces: 2
+	})*/
+
+	/* Uwaga: żeby porównywać ceny, wychodzi na to, że trzeba będzie zapisać cały poprzedni xml... */
+	/* Uwaga: ten XML jest za duży, by go wczytać w taki sposób - trzeba to zrobić kawałek po kawałku. */
+	/*const xml = await fs.readFile(`${process.cwd().replace(/\\/g, "/")}/public/feed.xml`, 'utf8')*/
+	//const data = JSON.parse(convert.xml2json(xml, {compact: true, spaces: 2}))
+
+	const readStream = createReadStream(`${process.cwd().replace(/\\/g, "/")}/public/feed.xml`, {
+		highWaterMark: 64 * 1024,
+	});
+
+	// Strings are too short for gigantic XMLs
+	let data = [];
+
+	// magic
+	await (async function () {
+		for await (const chunk of readStream) {
+			data.push(chunk.toString());
+		}
+	})();
+
+	// Note: it seems like the only way this thing can be processed is by splitting and rearranging this whole file.
 
 	return (
 		<main className="p-10">
 			<h1 className="text-3xl uppercase font-bold">{country(params.lang)}</h1>
+			{/*
 			<DataTable
 				data={[...productWithPriceDifference, ...productWithoutPriceDifference]}
 				lang={params.lang}
 			/>
+		*/}
+			<div>
+				{/*data.offers.o.map(({_attributes, cat, name, imgs, desc, attrs}) => <div>
+					<ul>
+						<li>{_attributes.id}</li>
+						<li>{_attributes.variantId}</li>
+						<li>{_attributes.url}</li>
+						<li>Cena: {_attributes.price}</li>
+						<li>{_attributes.stock}</li>
+						<li>{_attributes.set}</li>
+						<li>{_attributes.weight}</li>
+					</ul>
+					<p>{cat?._text}</p>
+					<p>{name?._text}</p>
+					<p>{JSON.stringify(imgs)}</p>
+					<p>{desc?._cdata}</p>
+					{console.log(attrs.a)}
+					<ul>{attrs.a.map(({_attributes, _cdata}) => <li>{_attributes.name}: {_cdata}</li>)}</ul>
+	</div>)*/}
+			</div>
 		</main>
 	);
 };
