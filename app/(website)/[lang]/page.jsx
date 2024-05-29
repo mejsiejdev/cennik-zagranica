@@ -107,25 +107,6 @@ const LangPage = async ({ params }) => {
 				lang={params.lang}
 			/>
 		*/}
-			<div>
-				{/*data.offers.o.map(({_attributes, cat, name, imgs, desc, attrs}) => <div>
-					<ul>
-						<li>{_attributes.id}</li>
-						<li>{_attributes.variantId}</li>
-						<li>{_attributes.url}</li>
-						<li>Cena: {_attributes.price}</li>
-						<li>{_attributes.stock}</li>
-						<li>{_attributes.set}</li>
-						<li>{_attributes.weight}</li>
-					</ul>
-					<p>{cat?._text}</p>
-					<p>{name?._text}</p>
-					<p>{JSON.stringify(imgs)}</p>
-					<p>{desc?._cdata}</p>
-					{console.log(attrs.a)}
-					<ul>{attrs.a.map(({_attributes, _cdata}) => <li>{_attributes.name}: {_cdata}</li>)}</ul>
-	</div>)*/}
-			</div>
 		</main>
 	);
 };
