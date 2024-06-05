@@ -20,7 +20,7 @@ export async function GET() {
 
   // Before inserting, remove category names and product titles to avoid duplicates
   await prisma.categoryName.deleteMany({});
-  await prisma.productTitle.deleteMany({});
+  //await prisma.productTitle.deleteMany({});
 
   // Here we will clear it up, divide it into smaller parts
 
@@ -342,33 +342,46 @@ export async function GET() {
           ean: v._attributes.ean,
           freeTransport: product._attributes.freeTransport === "true",
           productTitle: {
-            create: product.titles.title.map((title) => {
-              // TODO: get the prices done
-              let productPrice = 0;
-              if (typeof product.basePrice.price !== "undefined") {
-                //console.log("base prices: ", product.basePrice.price);
-                let prices = product.basePrice.price;
-                if (!Array.isArray(prices)) {
-                  prices = [prices];
-                }
-                for (const price of prices) {
-                  //console.log(strategies[parseInt(price._attributes.tariff_strategy) - 1], title._attributes.lang);
-                  if (typeof strategies[parseInt(price._attributes.tariff_strategy) - 1] !== "undefined") {
-                    if (strategies[parseInt(price._attributes.tariff_strategy) - 1].name == title._attributes.lang) {
-                      console.log("Match!");
-                      productPrice = parseFloat(price._attributes.gross);
+            create: await Promise.all(
+              product.titles.title.map(async (title) => {
+                // TODO: get the prices done
+                let newPrice = 0;
+                if (typeof product.basePrice.price !== "undefined") {
+                  //console.log("base prices: ", product.basePrice.price);
+                  let prices = product.basePrice.price;
+                  if (!Array.isArray(prices)) {
+                    prices = [prices];
+                  }
+                  for (const price of prices) {
+                    //console.log(strategies[parseInt(price._attributes.tariff_strategy) - 1], title._attributes.lang);
+                    if (typeof strategies[parseInt(price._attributes.tariff_strategy) - 1] !== "undefined") {
+                      if (strategies[parseInt(price._attributes.tariff_strategy) - 1].name == title._attributes.lang) {
+                        //console.log("Match!");
+                        newPrice = parseFloat(price._attributes.gross);
+                      }
                     }
                   }
                 }
-              }
-              return {
-                name: title._cdata,
-                lang: title._attributes.lang,
-                newPrice: productPrice,
-                oldPrice: productPrice,
-                priceDifference: 0,
-              };
-            }),
+                const previousPrice = await prisma.productTitle.findFirst({
+                  where: {
+                    productId: parseInt(product._attributes.id),
+                    name: title._cdata,
+                    lang: title._attributes.lang,
+                  },
+                  select: {
+                    newPrice: true,
+                  },
+                });
+
+                return {
+                  name: title._cdata,
+                  lang: title._attributes.lang,
+                  newPrice: newPrice,
+                  oldPrice: previousPrice !== null ? previousPrice.newPrice : 0,
+                  priceDifference: 0,
+                };
+              })
+            ),
           },
         },
         create: {
@@ -381,32 +394,45 @@ export async function GET() {
           ean: v._attributes.ean,
           freeTransport: product._attributes.freeTransport === "true",
           productTitle: {
-            create: product.titles.title.map((title) => {
-              let productPrice = 0;
-              if (typeof product.basePrice.price !== "undefined") {
-                //console.log("base prices: ", product.basePrice.price);
-                let prices = product.basePrice.price;
-                if (!Array.isArray(prices)) {
-                  prices = [prices];
-                }
-                for (const price of prices) {
-                  //console.log(strategies[parseInt(price._attributes.tariff_strategy) - 1], title._attributes.lang);
-                  if (typeof strategies[parseInt(price._attributes.tariff_strategy) - 1] !== "undefined") {
-                    if (strategies[parseInt(price._attributes.tariff_strategy) - 1].name == title._attributes.lang) {
-                      console.log("Match!");
-                      productPrice = parseFloat(price._attributes.gross);
+            create: await Promise.all(
+              product.titles.title.map(async (title) => {
+                let newPrice = 0;
+                if (typeof product.basePrice.price !== "undefined") {
+                  //console.log("base prices: ", product.basePrice.price);
+                  let prices = product.basePrice.price;
+                  if (!Array.isArray(prices)) {
+                    prices = [prices];
+                  }
+                  for (const price of prices) {
+                    //console.log(strategies[parseInt(price._attributes.tariff_strategy) - 1], title._attributes.lang);
+                    if (typeof strategies[parseInt(price._attributes.tariff_strategy) - 1] !== "undefined") {
+                      if (strategies[parseInt(price._attributes.tariff_strategy) - 1].name == title._attributes.lang) {
+                        //console.log("Match!");
+                        newPrice = parseFloat(price._attributes.gross);
+                      }
                     }
                   }
                 }
-              }
-              return {
-                name: title._cdata,
-                lang: title._attributes.lang,
-                newPrice: productPrice,
-                oldPrice: productPrice,
-                priceDifference: 0,
-              };
-            }),
+                const previousPrice = await prisma.productTitle.findFirst({
+                  where: {
+                    productId: parseInt(product._attributes.id),
+                    name: title._cdata,
+                    lang: title._attributes.lang,
+                  },
+                  select: {
+                    newPrice: true,
+                  },
+                });
+
+                return {
+                  name: title._cdata,
+                  lang: title._attributes.lang,
+                  newPrice: newPrice,
+                  oldPrice: previousPrice !== null ? previousPrice.newPrice : 0,
+                  priceDifference: 0,
+                };
+              })
+            ),
           },
         },
       });

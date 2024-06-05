@@ -56,8 +56,8 @@ model ProductTitle {
     id                 Int                  @id @default(autoincrement())
     name               String?
     lang               String
-    newPrice           Float
-    oldPrice           Float
+    newPrice           Float                @default(0)
+    oldPrice           Float                @default(0)
     priceDifference    Float
     priceDifferenceAt  DateTime?
     priceNotifications PriceNotifications[]
