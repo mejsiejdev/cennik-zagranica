@@ -30,22 +30,23 @@ model Category {
 
 model CategoryName {
     id         Int      @id @default(autoincrement())
-    category   Category @relation(fields: [categoryId], references: [id])
+    category   Category @relation(fields: [categoryId], references: [id], onUpdate: Cascade, onDelete: Cascade)
     categoryId Int
     lang       String
     text       String?
 }
 
 model Product {
-    id            Int            @id
+    id            Int            @id @default(autoincrement())
+    productId     Int
     active        Boolean
-    weight        Int
+    weight        Float
     freeTransport Boolean        @default(false)
     variantId     Int            @unique
     sku           String
     ean           String
-    brand         Brand          @relation(fields: [brandId], references: [id])
-    brandId       Int
+    brand         Brand?         @relation(fields: [brandId], references: [id])
+    brandId       Int?
     productTitle  ProductTitle[]
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @default(now()) @updatedAt
@@ -53,7 +54,7 @@ model Product {
 
 model ProductTitle {
     id                 Int                  @id @default(autoincrement())
-    name               String
+    name               String?
     lang               String
     newPrice           Float
     oldPrice           Float

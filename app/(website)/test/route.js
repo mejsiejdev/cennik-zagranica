@@ -18,6 +18,10 @@ export async function GET() {
     data.push(line.trim());
   }
 
+  // Before inserting, remove category names and product titles to avoid duplicates
+  await prisma.categoryName.deleteMany({});
+  await prisma.productTitle.deleteMany({});
+
   // Here we will clear it up, divide it into smaller parts
 
   // Aliases
@@ -44,6 +48,7 @@ export async function GET() {
   // Categories
   // the category has id, may have a parent or an alias it belongs to
 
+  // ! I have to fix category names getting duplicated.
   console.log("Starting inserting categories...");
   for (const category of convert.xml2js(data.slice(data.indexOf("<categories>"), data.indexOf("</categories>") + 1), {
     compact: true,
@@ -79,9 +84,9 @@ export async function GET() {
         },
       },
     });
-    console.log(`- Inserted category (id: ${category._attributes.id}, text: ${category.name.map(({ _cdata }) => _cdata)})`);
+    //console.log(`- Inserted category (id: ${category._attributes.id})`);
   }
-  console.log("Finished inserting categories.");
+  console.log("Finished inserting categories.\n");
 
   //console.log("Categories: ", categories);
 
@@ -163,18 +168,100 @@ export async function GET() {
       };
     });
 
-  const tariff_strategies = convert
+  const strategies = convert
     .xml2js(data.slice(data.indexOf("<tariff_strategies>"), data.indexOf("</tariff_strategies>") + 1), {
       compact: true,
       spaces: 2,
     })
-    .tariff_strategies.strategy.map(({ _attributes }) => {
+    .tariff_strategies.strategy.map((s) => {
+      let code = "pl";
+      switch (s._attributes.name.slice(10).trim()) {
+        case "Wielka Brytania":
+          code = "en";
+          break;
+        case "Niemcy":
+          code = "de";
+          break;
+        case "Rosja":
+          code = "ru";
+          break;
+        case "Czechy":
+          code = "cz";
+          break;
+        case "Francja":
+          code = "fr";
+          break;
+        case "Litwa":
+          code = "lt";
+          break;
+        case "Rumunia":
+          code = "ro";
+          break;
+        case "Słowacja":
+          code = "sk";
+          break;
+        case "Węgry":
+          code = "hu";
+          break;
+        case "Włochy":
+          code = "it";
+          break;
+        case "Bułgaria":
+          code = "bg";
+          break;
+        case "Ukraina":
+          code = "uk";
+          break;
+        case "Hiszpania":
+          code = "es";
+          break;
+        case "Chorwacja":
+          code = "hr";
+          break;
+        case "Holandia":
+          code = "nl";
+          break;
+        case "Czarnogóra":
+          code = "me";
+          break;
+        case "Belgia":
+          code = "be";
+          break;
+        case "Austria":
+          code = "at";
+          break;
+        case "Serbia":
+          code = "xs";
+          break;
+        case "Irlandia":
+          code = "ie";
+          break;
+        case "Słowenia":
+          code = "si";
+          break;
+        case "Estonia":
+          code = "ee";
+          break;
+        case "Łotwa":
+          code = "lv";
+          break;
+        case "Portugalia":
+          code = "pt";
+          break;
+        case "Finlandia":
+          code = "fi";
+          break;
+        case "Grecja":
+          code = "gr";
+          break;
+      }
       return {
-        id: _attributes.id,
-        name: _attributes.name,
-        currency: _attributes.currency,
+        name: code,
+        currency: s._attributes.currency,
       };
     });
+
+  console.log("Strategies: ", strategies);
 
   const comparers = convert
     .xml2js(data.slice(data.indexOf("<comparers>"), data.indexOf("</comparers>") + 1), {
@@ -188,20 +275,26 @@ export async function GET() {
       };
     });
 
-  const producers = convert
-    .xml2js(data.slice(data.indexOf("<producers>"), data.indexOf("</producers>") + 1), {
-      compact: true,
-      spaces: 2,
-    })
-    .producers.producer.map(({ _attributes }) => {
-      return {
-        id: _attributes.id,
-        name: _attributes.name,
-      };
+  for (const producer of convert.xml2js(data.slice(data.indexOf("<producers>"), data.indexOf("</producers>") + 1), {
+    compact: true,
+    spaces: 2,
+  }).producers.producer) {
+    await prisma.brand.upsert({
+      where: { id: parseInt(producer._attributes.id) },
+      update: {
+        name: producer._attributes.name,
+      },
+      create: {
+        id: parseInt(producer._attributes.id),
+        name: producer._attributes.name,
+      },
     });
+  }
 
   // products by themselves are too long
   // I will have to save them to Postgres one by one...
+
+  console.log("Starting inserting products...");
 
   // why do I have to do this
   const endIndexes = data.slice(0, data.indexOf("</products>")).reduce(function (a, e, i) {
@@ -213,14 +306,115 @@ export async function GET() {
 
   let start = data.indexOf("<products>") + 1;
 
-  endIndexes.forEach((i) => {
-    const { product } = convert.xml2js(data.slice(start, i + 1), { compact: true, spaces: 2 });
+  for (const i of endIndexes) {
+    const { p } = convert.xml2js(`<p>${data.slice(start, i + 1)}</p>`, { compact: true, spaces: 2 });
+
+    const product = p.product;
+
+    // Optimizing the memory usage
     delete product._text;
-    //console.log(product.stockTotal);
-    //console.log(product.titles);
+    delete product.descriptions;
+
+    // I have to get tariff_strategies sorted out if I want to add product price...
+    //console.log("id: ", product._attributes.id);
+
+    // the problem is that there can be either multiple variants, or just one
+    // and for some stupid reason if there is only one, it is returned as object
+    // so I will just force it to be an array to save time (and code)
+    if (!Array.isArray(product.variants.variant)) {
+      product.variants.variant = [product.variants.variant];
+    }
+
+    // Go over every single variant...
+    for (const v of product.variants.variant) {
+      //console.log("Variant id: ", v._attributes.id);
+      await prisma.product.upsert({
+        where: {
+          variantId: parseInt(v._attributes.id),
+        },
+        update: {
+          productId: parseInt(product._attributes.id),
+          active: v._attributes.isActive === "true",
+          weight: parseFloat(product._attributes.weight),
+          brandId: parseInt(product._attributes.producer),
+          variantId: parseInt(v._attributes.id),
+          sku: v._attributes.symbol,
+          ean: v._attributes.ean,
+          freeTransport: product._attributes.freeTransport === "true",
+          productTitle: {
+            create: product.titles.title.map((title) => {
+              // TODO: get the prices done
+              let productPrice = 0;
+              if (typeof product.basePrice.price !== "undefined") {
+                //console.log("base prices: ", product.basePrice.price);
+                let prices = product.basePrice.price;
+                if (!Array.isArray(prices)) {
+                  prices = [prices];
+                }
+                for (const price of prices) {
+                  //console.log(strategies[parseInt(price._attributes.tariff_strategy) - 1], title._attributes.lang);
+                  if (typeof strategies[parseInt(price._attributes.tariff_strategy) - 1] !== "undefined") {
+                    if (strategies[parseInt(price._attributes.tariff_strategy) - 1].name == title._attributes.lang) {
+                      console.log("Match!");
+                      productPrice = parseFloat(price._attributes.gross);
+                    }
+                  }
+                }
+              }
+              return {
+                name: title._cdata,
+                lang: title._attributes.lang,
+                newPrice: productPrice,
+                oldPrice: productPrice,
+                priceDifference: 0,
+              };
+            }),
+          },
+        },
+        create: {
+          productId: parseInt(product._attributes.id),
+          active: v._attributes.isActive === "true",
+          weight: parseFloat(product._attributes.weight),
+          brandId: parseInt(product._attributes.producer),
+          variantId: parseInt(v._attributes.id),
+          sku: v._attributes.symbol,
+          ean: v._attributes.ean,
+          freeTransport: product._attributes.freeTransport === "true",
+          productTitle: {
+            create: product.titles.title.map((title) => {
+              let productPrice = 0;
+              if (typeof product.basePrice.price !== "undefined") {
+                //console.log("base prices: ", product.basePrice.price);
+                let prices = product.basePrice.price;
+                if (!Array.isArray(prices)) {
+                  prices = [prices];
+                }
+                for (const price of prices) {
+                  //console.log(strategies[parseInt(price._attributes.tariff_strategy) - 1], title._attributes.lang);
+                  if (typeof strategies[parseInt(price._attributes.tariff_strategy) - 1] !== "undefined") {
+                    if (strategies[parseInt(price._attributes.tariff_strategy) - 1].name == title._attributes.lang) {
+                      console.log("Match!");
+                      productPrice = parseFloat(price._attributes.gross);
+                    }
+                  }
+                }
+              }
+              return {
+                name: title._cdata,
+                lang: title._attributes.lang,
+                newPrice: productPrice,
+                oldPrice: productPrice,
+                priceDifference: 0,
+              };
+            }),
+          },
+        },
+      });
+    }
+    //console.log(`Inserted product (id: ${product._attributes.id})`);
 
     start = i + 1;
-  });
+  }
 
   /*
     const stockTotal = convert
