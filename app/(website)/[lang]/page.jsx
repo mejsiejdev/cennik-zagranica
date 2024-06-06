@@ -64,11 +64,19 @@ const LangPage = async ({ params }) => {
 		(product) => product.price.priceDifference === 0 && true
 	);
 
+	// Get all the brands for the filter
+	const brands = await prisma.brand.findMany({
+		select: {
+			name: true,
+		},
+	});
+
 	return (
 		<main className="p-10">
 			<h1 className="text-3xl uppercase font-bold">{country(params.lang)}</h1>
 			<DataTable
 				data={[...productWithPriceDifference, ...productWithoutPriceDifference]}
+				brands={brands}
 				lang={params.lang}
 			/>
 		</main>

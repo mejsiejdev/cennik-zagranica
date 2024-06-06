@@ -11,6 +11,8 @@ import {
 	useReactTable,
 } from "@tanstack/react-table";
 
+import * as Select from "@radix-ui/react-select";
+
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -30,7 +32,7 @@ import {
 import { currencyMapping } from "@/lib/utils";
 import { useState } from "react";
 
-export function DataTable({ data, lang }) {
+export function DataTable({ data, brands, lang }) {
 	const [sorting, setSorting] = useState([]);
 	const [columnFilters, setColumnFilters] = useState([]);
 	const [columnVisibility, setColumnVisibility] = useState({});
@@ -210,6 +212,32 @@ export function DataTable({ data, lang }) {
 					}
 					className="max-w-sm mr-4"
 				/>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="outline" className="ml-auto">
+							Brands <ChevronDownIcon className="ml-2 h-4 w-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent>
+						{brands.map((brand, key) => {
+							return (
+								<DropdownMenuCheckboxItem
+									key={key}
+									className="uppercase"
+									checked={
+										table.getColumn("brand")?.getFilterValue() === brand.name
+									}
+									onCheckedChange={(value) =>
+										table.getColumn("brand")?.setFilterValue(value)
+									}
+								>
+									{brand.name}
+								</DropdownMenuCheckboxItem>
+							);
+						})}
+					</DropdownMenuContent>
+				</DropdownMenu>
+				<Select.Root></Select.Root>
 				<Input
 					placeholder="Filter Title..."
 					value={table.getColumn("name")?.getFilterValue() ?? ""}
