@@ -11,8 +11,6 @@ import {
 	useReactTable,
 } from "@tanstack/react-table";
 
-import * as Select from "@radix-ui/react-select";
-
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -90,6 +88,9 @@ export function DataTable({ data, brands, lang }) {
 		},
 		{
 			accessorKey: "brand",
+			filterFn: (row, columnId, filterValue) => {
+				return row.getValue("brand") === filterValue;
+			},
 			header: ({ column }) => {
 				return (
 					<Button
@@ -204,21 +205,26 @@ export function DataTable({ data, brands, lang }) {
 					onChange={(event) => table.getColumn("ean")?.setFilterValue(event.target.value)}
 					className="max-w-sm mr-4"
 				/>
-				<Input
-					placeholder="Filter Brand..."
-					value={table.getColumn("brand")?.getFilterValue() ?? ""}
-					onChange={(event) =>
-						table.getColumn("brand")?.setFilterValue(event.target.value)
-					}
-					className="max-w-sm mr-4"
-				/>
-				<DropdownMenu>
+				<DropdownMenu className>
 					<DropdownMenuTrigger asChild>
-						<Button variant="outline" className="ml-auto">
-							Brands <ChevronDownIcon className="ml-2 h-4 w-4" />
+						<Button variant="outline" className="ml-auto mr-4">
+							{typeof table.getColumn("brand")?.getFilterValue() === "undefined"
+								? "Brands"
+								: table.getColumn("brand")?.getFilterValue()}{" "}
+							<ChevronDownIcon className="ml-2 h-4 w-4" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent>
+						<DropdownMenuCheckboxItem
+							checked={
+								typeof table.getColumn("brand")?.getFilterValue() === "undefined"
+							}
+							onCheckedChange={() => {
+								table.getColumn("brand")?.setFilterValue("");
+							}}
+						>
+							All
+						</DropdownMenuCheckboxItem>
 						{brands.map((brand, key) => {
 							return (
 								<DropdownMenuCheckboxItem
@@ -227,9 +233,9 @@ export function DataTable({ data, brands, lang }) {
 									checked={
 										table.getColumn("brand")?.getFilterValue() === brand.name
 									}
-									onCheckedChange={(value) =>
-										table.getColumn("brand")?.setFilterValue(value)
-									}
+									onCheckedChange={() => {
+										table.getColumn("brand")?.setFilterValue(brand.name);
+									}}
 								>
 									{brand.name}
 								</DropdownMenuCheckboxItem>
@@ -237,7 +243,7 @@ export function DataTable({ data, brands, lang }) {
 						})}
 					</DropdownMenuContent>
 				</DropdownMenu>
-				<Select.Root></Select.Root>
+
 				<Input
 					placeholder="Filter Title..."
 					value={table.getColumn("name")?.getFilterValue() ?? ""}
