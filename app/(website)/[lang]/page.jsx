@@ -29,32 +29,43 @@ const LangPage = async ({ params }) => {
 
 	let products = await prisma.product.findMany({
 		include: {
-			productTitle: {
+			titles: {
 				where: {
-					lang: params.lang,
+					productTitle: {
+						lang: params.lang,
+					},
 				},
 			},
 			brand: true,
 		},
 	});
-	const preparedProducts = products
-		.filter((product) => product.productTitle.length !== 0)
-		.map((prod) => {
-			const { variantId, sku, ean, brand } = prod;
-			return {
-				variantId,
-				sku,
-				ean,
-				brand: brand?.name,
-				name: prod.productTitle[0].name,
-				lang: prod.productTitle[0].lang,
-				price: {
-					newPrice: prod.productTitle[0].newPrice,
-					oldPrice: prod.productTitle[0].oldPrice,
-					priceDifference: prod.productTitle[0].priceDifference,
-				},
-			};
-		});
+
+	console.log(products[0].titles);
+	const preparedProducts = await Promise.all(
+		products
+			.filter((product) => product.titles.length !== 0)
+			.map(async (prod) => {
+				const title = await prisma.productTitle.findUnique({
+					where: {
+						id: prod.titles[0].productTitleId,
+					},
+				});
+				const { variantId, sku, ean, brand } = prod;
+				return {
+					variantId,
+					sku,
+					ean,
+					brand: brand?.name,
+					name: title.name,
+					lang: title.lang,
+					price: {
+						newPrice: title.newPrice,
+						oldPrice: title.oldPrice,
+						priceDifference: title.priceDifference,
+					},
+				};
+			})
+	);
 
 	const productWithPriceDifference = preparedProducts.filter(
 		(product) =>
