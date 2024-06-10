@@ -37,19 +37,19 @@ model CategoryName {
 }
 
 model Product {
-    id            Int            @id @default(autoincrement())
+    id            Int               @id @default(autoincrement())
     productId     Int
     active        Boolean
     weight        Float
-    freeTransport Boolean        @default(false)
-    variantId     Int            @unique
+    freeTransport Boolean           @default(false)
+    variantId     Int               @unique
     sku           String
     ean           String
-    brand         Brand?         @relation(fields: [brandId], references: [id])
+    brand         Brand?            @relation(fields: [brandId], references: [id])
     brandId       Int?
-    productTitle  ProductTitle[]
-    createdAt     DateTime       @default(now())
-    updatedAt     DateTime       @default(now()) @updatedAt
+    createdAt     DateTime          @default(now())
+    updatedAt     DateTime          @default(now()) @updatedAt
+    titles        ProductOnTitles[]
 }
 
 model ProductTitle {
@@ -61,10 +61,18 @@ model ProductTitle {
     priceDifference    Float
     priceDifferenceAt  DateTime?
     priceNotifications PriceNotifications[]
-    product            Product              @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-    productId          Int
     createdAt          DateTime             @default(now())
     updatedAt          DateTime             @default(now())
+    products           ProductOnTitles[]
+}
+
+model ProductOnTitles {
+    product        Product      @relation(fields: [productId], references: [id])
+    productId      Int
+    productTitle   ProductTitle @relation(fields: [productTitleId], references: [id])
+    productTitleId Int
+
+    @@id([productId, productTitleId])
 }
 
 model PriceNotifications {

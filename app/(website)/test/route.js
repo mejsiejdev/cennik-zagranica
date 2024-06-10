@@ -21,6 +21,7 @@ export async function GET() {
   // Before inserting, remove category names and product titles to avoid duplicates
   await prisma.categoryName.deleteMany({});
   //await prisma.productTitle.deleteMany({});
+  //await prisma.product.deleteMany({});
 
   // Here we will clear it up, divide it into smaller parts
 
@@ -325,10 +326,11 @@ export async function GET() {
       product.variants.variant = [product.variants.variant];
     }
 
+    let productIds = [];
     // Go over every single variant...
     for (const v of product.variants.variant) {
       //console.log("Variant id: ", v._attributes.id);
-      await prisma.product.upsert({
+      const result = await prisma.product.upsert({
         where: {
           variantId: parseInt(v._attributes.id),
         },
@@ -353,9 +355,11 @@ export async function GET() {
           freeTransport: product._attributes.freeTransport === "true",
         },
       });
+      productIds.push(result.id);
+      console.log(`Inserted product (id: ${product._attributes.id}, variantId: ${v._attributes.id})`);
     }
 
-    console.log("Inserting product's titles...");
+    //console.log("Inserting product's titles...");
     await Promise.all(
       product.titles.title.map(async (title) => {
         let newPrice = 0;
@@ -377,7 +381,13 @@ export async function GET() {
         }
         const currentProductData = await prisma.productTitle.findFirst({
           where: {
-            productId: parseInt(product._attributes.id),
+            products: {
+              some: {
+                productId: {
+                  in: productIds,
+                },
+              },
+            },
             name: title._cdata,
             lang: title._attributes.lang,
           },
@@ -387,30 +397,45 @@ export async function GET() {
           },
         });
 
-        await prisma.productTitle.upsert({
-          where: {
-            id: currentProductData !== null ? currentProductData.id : -1,
-          },
-          update: {
-            name: title._cdata,
-            lang: title._attributes.lang,
-            newPrice: newPrice,
-            oldPrice: currentProductData !== null ? currentProductData.newPrice : 0,
-            priceDifference: currentProductData !== null ? newPrice - currentProductData.newPrice : 0,
-          },
-          create: {
-            name: title._cdata,
-            lang: title._attributes.lang,
-            newPrice: newPrice,
-            oldPrice: 0,
-            priceDifference: 0,
-            productId: parseInt(product._attributes.id),
-          },
-        });
+        console.log("cpd:", currentProductData);
+
+        if (currentProductData !== null) {
+          await prisma.productTitle.update({
+            where: {
+              id: currentProductData.id,
+            },
+            data: {
+              name: title._cdata,
+              lang: title._attributes.lang,
+              newPrice: newPrice,
+              oldPrice: currentProductData.newPrice,
+              priceDifference: newPrice - currentProductData.newPrice,
+            },
+          });
+        } else {
+          await prisma.productTitle.create({
+            data: {
+              name: title._cdata,
+              lang: title._attributes.lang,
+              newPrice: newPrice,
+              oldPrice: 0,
+              priceDifference: 0,
+              products: {
+                create: productIds.map((id) => {
+                  return {
+                    product: {
+                      connect: {
+                        id: id,
+                      },
+                    },
+                  };
+                }),
+              },
+            },
+          });
+        }
       })
     );
-
-    //console.log(`Inserted product (id: ${product._attributes.id})`);
 
     start = i + 1;
   }
