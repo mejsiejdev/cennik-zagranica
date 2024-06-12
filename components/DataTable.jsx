@@ -40,8 +40,8 @@ export function DataTable({ data, brands, lang }) {
 	const columns = [
 		{
 			accessorKey: "variantId",
-			filterFn: (row, filterValue) => {
-				return row.getValue("variantId").toString().includes(filterValue);
+			filterFn: (row, columnId, filterValue) => {
+				return row.getValue(columnId).toString().includes(filterValue);
 			},
 			header: ({ column }) => {
 				return (
@@ -190,12 +190,7 @@ export function DataTable({ data, brands, lang }) {
 			<div className="flex items-center py-4">
 				<Input
 					placeholder="Filter ID..."
-					value={
-						table.getColumn("variantId")?.getFilterValue() !== "" &&
-						typeof table.getColumn("variantId")?.getFilterValue() !== "undefined"
-							? parseInt(table.getColumn("variantId")?.getFilterValue())
-							: ""
-					}
+					value={table.getColumn("variantId")?.getFilterValue() ?? ""}
 					onChange={(event) =>
 						table.getColumn("variantId")?.setFilterValue(event.target.value)
 					}
