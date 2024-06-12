@@ -40,6 +40,9 @@ export function DataTable({ data, brands, lang }) {
 	const columns = [
 		{
 			accessorKey: "variantId",
+			filterFn: (row, filterValue) => {
+				return row.getValue("variantId").toString().includes(filterValue);
+			},
 			header: ({ column }) => {
 				return (
 					<Button
@@ -134,16 +137,18 @@ export function DataTable({ data, brands, lang }) {
 						currency: currencyMapping(lang).currency,
 					}).format(newPrice);
 
-					if (newPrice > oldPrice)
-						return {
-							price: price + " ▲",
-							style: "text-green-600",
-						};
-					if (newPrice < oldPrice)
-						return {
-							price: price + " ▼",
-							style: "text-red-600",
-						};
+					if (oldPrice !== 0) {
+						if (newPrice > oldPrice)
+							return {
+								price: price + " ▲",
+								style: "text-green-600",
+							};
+						if (newPrice < oldPrice)
+							return {
+								price: price + " ▼",
+								style: "text-red-600",
+							};
+					}
 					return { price: price, style: "text-black pr-[16px]" };
 				};
 
@@ -185,7 +190,12 @@ export function DataTable({ data, brands, lang }) {
 			<div className="flex items-center py-4">
 				<Input
 					placeholder="Filter ID..."
-					value={table.getColumn("variantId")?.getFilterValue() ?? ""}
+					value={
+						table.getColumn("variantId")?.getFilterValue() !== "" &&
+						typeof table.getColumn("variantId")?.getFilterValue() !== "undefined"
+							? parseInt(table.getColumn("variantId")?.getFilterValue())
+							: ""
+					}
 					onChange={(event) =>
 						table.getColumn("variantId")?.setFilterValue(event.target.value)
 					}
