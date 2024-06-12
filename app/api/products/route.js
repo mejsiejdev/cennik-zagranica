@@ -61,6 +61,9 @@ export async function GET() {
     console.error("Download failed.", error);
   }
 
+  // Before inserting, remove category names and product titles to avoid duplicates
+  await prisma.categoryName.deleteMany({});
+
   // Strings are too short for gigantic XMLs
   let data = [];
 
@@ -74,11 +77,6 @@ export async function GET() {
   for await (const line of lineReader) {
     data.push(line.trim());
   }
-
-  // Before inserting, remove category names and product titles to avoid duplicates
-  await prisma.categoryName.deleteMany({});
-  //await prisma.productTitle.deleteMany({});
-  //await prisma.product.deleteMany({});
 
   // Here we will clear it up, divide it into smaller parts
 
@@ -372,7 +370,7 @@ export async function GET() {
               lang: title._attributes.lang,
               newPrice: newPrice,
               oldPrice: currentProductData.newPrice,
-              priceDifference: newPrice - currentProductData.newPrice,
+              priceDifference: currentProductData.newPrice !== 0 ? newPrice - currentProductData.newPrice : 0,
             },
           });
         } else {
