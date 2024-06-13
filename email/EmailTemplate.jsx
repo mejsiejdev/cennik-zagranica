@@ -71,6 +71,7 @@ const EmailTemplate = (data, lang) => {
 					</Column>
 				</Row>
 				{data.map((item) => {
+					if (typeof item === "undefined") return;
 					return (
 						<Row style={{ borderBottom: "1px solid black" }} key={item.ean}>
 							<Column

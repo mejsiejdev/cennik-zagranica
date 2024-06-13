@@ -55,10 +55,11 @@ export async function GET() {
     const request = await axios.get("https://lazienka-rea.com.pl/feed/generate/full_offer", {
       responseType: "stream",
     });
-    await p(request.data, createWriteStream(`${process.cwd().replace(/\\/g, "/")}/public/temp/feed.xml`, { flags: "w" }));
+    await p(request.data, createWriteStream(`${process.cwd().replace(/\\/g, "/")}/public/temp/feed.xml`, { flags: "w+" }));
     console.log("Download successful!");
   } catch (error) {
     console.error("Download failed.", error);
+    return NextResponse.json({ message: error });
   }
 
   // Before inserting, remove category names and product titles to avoid duplicates
@@ -358,8 +359,6 @@ export async function GET() {
           },
         });
 
-        console.log("cpd:", currentProductData);
-
         if (currentProductData !== null) {
           await prisma.productTitle.update({
             where: {
@@ -391,6 +390,12 @@ export async function GET() {
                     },
                   };
                 }),
+              },
+              priceNotifications: {
+                create: {
+                  isSent: false,
+                  lang: title._attributes.lang,
+                },
               },
             },
           });
